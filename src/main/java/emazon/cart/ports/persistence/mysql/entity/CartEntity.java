@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalTime;
+import java.util.Date;
 
 @Entity
 @AllArgsConstructor
@@ -31,9 +31,9 @@ public class CartEntity {
     private Integer cartQuantity;
 
     @Column(name= "created_at", nullable = false)
-    private LocalTime createdAt;
+    private Date createdAt;
 
     @Column(name= "updated_at", nullable = false)
-    private LocalTime updatedAt;
+    private Date updatedAt;
 
 }

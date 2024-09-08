@@ -1,17 +1,19 @@
 package emazon.cart.domain.model;
 
+import java.util.Date;
+
 public class Cart {
     private Long cartId;
     private Long userId;
     private Long productId;
     private Integer quantity;
-    private String createdAt;
-    private String updatedAt;
+    private Date createdAt;
+    private Date updatedAt;
 
     public Cart() {
     }
 
-    public Cart(Long cartId, Long userId, Long productId, Integer quantity, String createdAt, String updatedAt) {
+    public Cart(Long cartId, Long userId, Long productId, Integer quantity, Date createdAt, Date updatedAt) {
         this.cartId = cartId;
         this.userId = userId;
         this.productId = productId;
@@ -52,19 +54,19 @@ public class Cart {
         this.quantity = quantity;
     }
 
-    public String getCreatedAt() {
+    public Date getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(String createdAt) {
+    public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
     }
 
-    public String getUpdatedAt() {
+    public Date getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(String updatedAt) {
+    public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
     }
 }
