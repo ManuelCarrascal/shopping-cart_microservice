@@ -4,6 +4,7 @@ package emazon.cart.infrastructure.config.exceptionhandler;
 import emazon.cart.domain.exception.InsufficientStockException;
 import emazon.cart.domain.exception.NotFoundException;
 import emazon.cart.infrastructure.config.utils.HandlerControllerAdvisorConstants;
+
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -34,4 +35,5 @@ public class HandlerControllerAdvisor {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of(HandlerControllerAdvisorConstants.MESSAGE_KEY, ex.getMessage()));
     }
+
 }

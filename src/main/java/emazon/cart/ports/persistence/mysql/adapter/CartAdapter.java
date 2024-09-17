@@ -6,6 +6,8 @@ import emazon.cart.ports.persistence.mysql.mapper.ICartEntityMapper;
 import emazon.cart.ports.persistence.mysql.repository.ICartRepository;
 import lombok.RequiredArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @RequiredArgsConstructor
 public class CartAdapter implements ICartPersistencePort {
 
@@ -20,5 +22,10 @@ public class CartAdapter implements ICartPersistencePort {
     @Override
     public Cart findProductByUserIdAndProductId(Long userId, Long productId) {
         return cartEntityMapper.toModel(cartRepository.findByUserIdAndProductId(userId, productId));
+    }
+
+    @Override
+    public LocalDateTime findLastModifiedByUserId(Long userId) {
+        return cartRepository.findLastModifiedByUserId(userId);
     }
 }

@@ -17,6 +17,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+
 
 @RestController
 @RequestMapping("/api/v1/cart")
@@ -30,9 +32,11 @@ public class CartRestController {
     @PreAuthorize(RolePermissionConstants.HAS_ROLE_CLIENTE)
     @PostMapping("/add")
     public ResponseEntity<CartResponse> addProductToCart(@Valid @RequestBody CartRequest cartRequest) {
-        Cart cart =cartRequestMapper.cartRequestToCart(cartRequest);
+        Cart cart = cartRequestMapper.cartRequestToCart(cartRequest);
         cartServicePort.addProductToCart(cart);
         CartResponse cartResponse = cartResponseMapper.cartToCartResponse(cart);
+        LocalDateTime lastModified = cartServicePort.getLastModifiedByUserId(cart.getUserId());
+        cartResponse.setLastModified(lastModified);
         return ResponseEntity.status(HttpStatus.CREATED).body(cartResponse);
     }
 

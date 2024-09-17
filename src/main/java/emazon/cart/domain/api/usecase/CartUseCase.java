@@ -9,6 +9,7 @@ import emazon.cart.domain.spi.ICartPersistencePort;
 import emazon.cart.domain.spi.IStockConnectionPersistencePort;
 
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 public class CartUseCase implements ICartServicePort {
@@ -54,6 +55,10 @@ public class CartUseCase implements ICartServicePort {
         cart.setCreatedAt(new Date());
         cart.setUpdatedAt(new Date());
         cartPersistencePort.addProductToCart(cart);
+    }
+
+    public LocalDateTime getLastModifiedByUserId(Long userId) {
+        return cartPersistencePort.findLastModifiedByUserId(userId);
     }
 
 }
