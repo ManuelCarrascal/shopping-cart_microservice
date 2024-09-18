@@ -1,48 +1,74 @@
 package emazon.cart.domain.api.usecase;
 
 import emazon.cart.domain.api.ICartServicePort;
+import emazon.cart.domain.exception.CategoriesLimitException;
 import emazon.cart.domain.exception.InsufficientStockException;
+import emazon.cart.domain.exception.JsonParsingException;
 import emazon.cart.domain.exception.NotFoundException;
 import emazon.cart.domain.model.Cart;
-import emazon.cart.domain.spi.IAuthenticationPersistencePort;
-import emazon.cart.domain.spi.ICartPersistencePort;
-import emazon.cart.domain.spi.IStockConnectionPersistencePort;
+import emazon.cart.domain.spi.*;
+import emazon.cart.domain.util.CartUseCaseConstants;
 
 
 import java.time.LocalDateTime;
-import java.util.Date;
+import java.util.*;
 
 public class CartUseCase implements ICartServicePort {
     private final ICartPersistencePort cartPersistencePort;
     private final IAuthenticationPersistencePort authenticationPersistencePort;
     private final IStockConnectionPersistencePort stockConnectionPersistencePort;
+    private final ISupplyConnectionPersistencePort supplyConnectionPersistencePort;
 
-    public CartUseCase(ICartPersistencePort cartPersistencePort, IAuthenticationPersistencePort authenticationPersistencePort, IStockConnectionPersistencePort stockConnectionPersistencePort) {
+    public CartUseCase(
+            ICartPersistencePort cartPersistencePort,
+            IAuthenticationPersistencePort authenticationPersistencePort,
+            IStockConnectionPersistencePort stockConnectionPersistencePort,
+            ISupplyConnectionPersistencePort supplyConnectionPersistencePort
+    ) {
         this.cartPersistencePort = cartPersistencePort;
         this.authenticationPersistencePort = authenticationPersistencePort;
         this.stockConnectionPersistencePort = stockConnectionPersistencePort;
+        this.supplyConnectionPersistencePort = supplyConnectionPersistencePort;
     }
 
     @Override
     public void addProductToCart(Cart cart) {
         Long userId = authenticationPersistencePort.getAuthenticatedUserId();
         cart.setUserId(userId);
-        if(!stockConnectionPersistencePort.existById(cart.getProductId())){
-            throw new NotFoundException("Product not found");
-        }
-        if(!stockConnectionPersistencePort.isStockSufficient(cart.getProductId(), cart.getQuantity())){
-            throw new InsufficientStockException("Insufficient stock");
-        }
+
+        validateProductExistence(cart.getProductId());
+
+        validateStockAvailability(cart);
 
         Cart existingCart = cartPersistencePort.findProductByUserIdAndProductId(userId, cart.getProductId());
+
         if (existingCart != null) {
             updateExistingCart(existingCart, cart.getQuantity());
             cart.setCreatedAt(existingCart.getCreatedAt());
             cart.setUpdatedAt(existingCart.getUpdatedAt());
         } else {
+            List<Long> productsCart = new ArrayList<>(cartPersistencePort.findProductIdsByUserId(userId));
+            productsCart.add(cart.getProductId());
+            checkCategoriesLimit(productsCart);
+
             createNewCart(cart);
         }
+    }
 
+    private void validateProductExistence(Long productId) {
+        if (!stockConnectionPersistencePort.existById(productId)) {
+            throw new NotFoundException(CartUseCaseConstants.PRODUCT_NOT_FOUND);
+        }
+    }
+
+    private void validateStockAvailability(Cart cart) {
+        if (!stockConnectionPersistencePort.isStockSufficient(cart.getProductId(), cart.getQuantity())) {
+            String nextSupplyDate = supplyConnectionPersistencePort.getNextSupplyDate(cart.getProductId());
+            if (nextSupplyDate == null) {
+                throw new JsonParsingException(CartUseCaseConstants.ERROR_PARSING_NEXT_SUPPLY_DATE);
+            }
+            throw new InsufficientStockException(CartUseCaseConstants.INSUFFICIENT_STOCK, nextSupplyDate);
+        }
     }
 
     private void updateExistingCart(Cart existingCart, int quantityToAdd){
@@ -61,4 +87,16 @@ public class CartUseCase implements ICartServicePort {
         return cartPersistencePort.findLastModifiedByUserId(userId);
     }
 
-}
+    private void checkCategoriesLimit(List<Long> productIds) {
+        Map<String, Integer> categoryCountMap = new HashMap<>();
+        for (Long productId : productIds) {
+            List<String> categories = stockConnectionPersistencePort.getCategoryNamesByProductId(productId);
+            for (String category : categories) {
+                categoryCountMap.put(category, categoryCountMap.getOrDefault(category, CartUseCaseConstants.DEFAULT_CATEGORY_COUNT) + CartUseCaseConstants.INCREMENT_CATEGORY_COUNT);
+                if (categoryCountMap.get(category) > CartUseCaseConstants.MAX_CATEGORY_LIMIT) {
+                    throw new CategoriesLimitException(CartUseCaseConstants.CATEGORIES_LIMIT_EXCEEDED + category);
+                }
+            }
+        }
+    }
+    }

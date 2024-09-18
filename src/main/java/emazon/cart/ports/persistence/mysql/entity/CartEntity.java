@@ -1,5 +1,6 @@
 package emazon.cart.ports.persistence.mysql.entity;
 
+import emazon.cart.ports.persistence.mysql.util.CartEntityConstants;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,27 +14,28 @@ import java.util.Date;
 @NoArgsConstructor
 @Getter
 @Setter
-@Table(name = "cart")
+@Table(name = CartEntityConstants.TABLE_NAME, indexes = {
+        @Index(name = CartEntityConstants.INDEX_USER_ID, columnList = CartEntityConstants.COLUMN_LIST_USER_ID)
+})
 public class CartEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "cart_id")
+    @Column(name = CartEntityConstants.COLUMN_CART_ID)
     private Long cartId;
 
-    @Column(name = "product_id", nullable = false)
+    @Column(name = CartEntityConstants.COLUMN_PRODUCT_ID, nullable = false)
     private Long productId;
 
-    @Column(name = "user_id", nullable = false)
+    @Column(name = CartEntityConstants.COLUMN_USER_ID, nullable = false)
     private Long userId;
 
-    @Column(name = "cart_quantity", nullable = false)
+    @Column(name = CartEntityConstants.COLUMN_QUANTITY, nullable = false)
     private Integer quantity;
 
-    @Column(name= "created_at", nullable = false)
+    @Column(name= CartEntityConstants.COLUMN_CREATED_AT, nullable = false)
     private Date createdAt;
 
-    @Column(name= "updated_at", nullable = false)
+    @Column(name= CartEntityConstants.COLUMN_UPDATED_AT, nullable = false)
     private Date updatedAt;
-
 }
