@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ICartRepository extends JpaRepository<CartEntity, Long> {
+
     CartEntity findByUserIdAndProductId(Long userId, Long productId);
 
     @Query(CartRepositoryConstants.FIND_LAST_MODIFIED_BY_USER_ID_QUERY)

@@ -8,6 +8,7 @@ import emazon.cart.ports.persistence.mysql.repository.ICartRepository;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -36,6 +37,21 @@ public class CartAdapter implements ICartPersistencePort {
         return cartRepository.findByUserId(userId).stream()
                 .map(CartEntity::getProductId)
                 .toList();
+    }
+
+    @Override
+    public void removeProductFromCart(Long userId, Long productId) {
+        CartEntity cartEntity = cartRepository.findByUserIdAndProductId(userId, productId);
+        cartRepository.delete(cartEntity);
+    }
+
+    @Override
+    public void updateCartItemsUpdatedAt(Long userId, Date updatedAt) {
+        List<CartEntity> cartEntities = cartRepository.findByUserId(userId);
+        for (CartEntity cartEntity : cartEntities) {
+            cartEntity.setUpdatedAt(updatedAt);
+            cartRepository.save(cartEntity);
+        }
     }
 
 }
