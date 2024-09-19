@@ -2,25 +2,22 @@ package emazon.cart.domain.api.usecase;
 
 import emazon.cart.domain.exception.CategoriesLimitException;
 import emazon.cart.domain.exception.InsufficientStockException;
-import emazon.cart.domain.exception.JsonParsingException;
 import emazon.cart.domain.exception.NotFoundException;
 import emazon.cart.domain.model.Cart;
 import emazon.cart.domain.spi.IAuthenticationPersistencePort;
 import emazon.cart.domain.spi.ICartPersistencePort;
 import emazon.cart.domain.spi.IStockConnectionPersistencePort;
 import emazon.cart.domain.spi.ISupplyConnectionPersistencePort;
+import emazon.cart.domain.util.CartUseCaseConstants;
 import org.junit.jupiter.api.Test;
-
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
-
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.ArgumentMatchers.any;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -38,44 +35,42 @@ class CartUseCaseTest {
     private final ICartPersistencePort cartPersistencePortMock = mock(ICartPersistencePort.class, "cartPersistencePort");
 
     @Test
-    void addProductToCartWhenStockConnectionPersistencePortNotExistByIdProductIdThrowsNotFoundException() {
+    void addProductToCartWhenProductNotExistThrowsNotFoundException() {
         doReturn(1L).when(authenticationPersistencePortMock).getAuthenticatedUserId();
-        doReturn(false).when(stockConnectionPersistencePortMock).existById(1L);
+        doReturn(false).when(stockConnectionPersistencePortMock).existById(1L); // Producto no existe
         CartUseCase target = new CartUseCase(cartPersistencePortMock, authenticationPersistencePortMock, stockConnectionPersistencePortMock, supplyConnectionPersistencePortMock);
         Cart cart = new Cart();
         cart.setProductId(1L);
         cart.setUserId(1L);
-        NotFoundException notFoundException = new NotFoundException("Product not found");
 
         final NotFoundException result = assertThrows(NotFoundException.class, () -> target.addProductToCart(cart));
 
         assertAll("result", () -> {
-            assertThat(result, is(notNullValue()));
-            assertThat(result.getMessage(), equalTo(notFoundException.getMessage()));
-            verify(authenticationPersistencePortMock).getAuthenticatedUserId();
+            assertThat(result.getMessage(), equalTo(CartUseCaseConstants.PRODUCT_NOT_FOUND));
             verify(stockConnectionPersistencePortMock).existById(1L);
         });
     }
 
     @Test
-    void addProductToCartWhenNextSupplyDateIsNullThrowsJsonParsingException() {
+    void addProductToCartWhenStockIsInsufficientThrowsInsufficientStockException() {
+
         doReturn(2L).when(authenticationPersistencePortMock).getAuthenticatedUserId();
         doReturn(true).when(stockConnectionPersistencePortMock).existById(2L);
         doReturn(false).when(stockConnectionPersistencePortMock).isStockSufficient(2L, 1);
-        doReturn(null).when(supplyConnectionPersistencePortMock).getNextSupplyDate(2L);
+        doReturn("2024-01-01T10:15:30").when(supplyConnectionPersistencePortMock).getNextSupplyDate(2L);
+
         CartUseCase target = new CartUseCase(cartPersistencePortMock, authenticationPersistencePortMock, stockConnectionPersistencePortMock, supplyConnectionPersistencePortMock);
+
         Cart cart = new Cart();
-        cart.setQuantity(1);
         cart.setProductId(2L);
         cart.setUserId(2L);
-        JsonParsingException jsonParsingException = new JsonParsingException("Error parsing next supply date");
+        cart.setQuantity(1);
 
-        final JsonParsingException result = assertThrows(JsonParsingException.class, () -> target.addProductToCart(cart));
+        final InsufficientStockException result = assertThrows(InsufficientStockException.class, () -> target.addProductToCart(cart));
 
         assertAll("result", () -> {
-            assertThat(result, is(notNullValue()));
-            assertThat(result.getMessage(), equalTo(jsonParsingException.getMessage()));
-            verify(authenticationPersistencePortMock).getAuthenticatedUserId();
+            assertThat(result.getMessage(), equalTo(CartUseCaseConstants.INSUFFICIENT_STOCK));
+            assertThat(result.getNextSupplyDate(), equalTo("2024-01-01T10:15:30"));
             verify(stockConnectionPersistencePortMock).existById(2L);
             verify(stockConnectionPersistencePortMock).isStockSufficient(2L, 1);
             verify(supplyConnectionPersistencePortMock).getNextSupplyDate(2L);
@@ -83,37 +78,12 @@ class CartUseCaseTest {
     }
 
     @Test
-    void addProductToCartWhenNextSupplyDateIsNotNullThrowsInsufficientStockException() {
+    void addProductToCartWhenExistingCartIsUpdated() {
         doReturn(3L).when(authenticationPersistencePortMock).getAuthenticatedUserId();
         doReturn(true).when(stockConnectionPersistencePortMock).existById(3L);
-        doReturn(false).when(stockConnectionPersistencePortMock).isStockSufficient(3L, 1);
-        doReturn("2024-01-01T10:15:30").when(supplyConnectionPersistencePortMock).getNextSupplyDate(3L);
-        CartUseCase target = new CartUseCase(cartPersistencePortMock, authenticationPersistencePortMock, stockConnectionPersistencePortMock, supplyConnectionPersistencePortMock);
-        Cart cart = new Cart();
-        cart.setQuantity(1);
-        cart.setProductId(3L);
-        cart.setUserId(3L);
-        InsufficientStockException insufficientStockException = new InsufficientStockException("Insufficient stock", "2024-01-01T10:15:30");
-
-        final InsufficientStockException result = assertThrows(InsufficientStockException.class, () -> target.addProductToCart(cart));
-
-        assertAll("result", () -> {
-            assertThat(result, is(notNullValue()));
-            assertThat(result.getMessage(), equalTo(insufficientStockException.getMessage()));
-            verify(authenticationPersistencePortMock).getAuthenticatedUserId();
-            verify(stockConnectionPersistencePortMock).existById(3L);
-            verify(stockConnectionPersistencePortMock).isStockSufficient(3L, 1);
-            verify(supplyConnectionPersistencePortMock).getNextSupplyDate(3L);
-        });
-    }
-
-    @Test
-    void addProductToCartWhenExistingCartIsNotNull() {
-        doReturn(4L).when(authenticationPersistencePortMock).getAuthenticatedUserId();
-        doReturn(true).when(stockConnectionPersistencePortMock).existById(4L);
-        doReturn(true).when(stockConnectionPersistencePortMock).isStockSufficient(4L, 1);
+        doReturn(true).when(stockConnectionPersistencePortMock).isStockSufficient(3L, 1);
         Cart cartMock = mock(Cart.class);
-        doReturn(cartMock).when(cartPersistencePortMock).findProductByUserIdAndProductId(4L, 4L);
+        doReturn(cartMock).when(cartPersistencePortMock).findProductByUserIdAndProductId(3L, 3L);
         doReturn(1).when(cartMock).getQuantity();
         doNothing().when(cartMock).setQuantity(2);
         doNothing().when(cartMock).setUpdatedAt(any());
@@ -126,23 +96,60 @@ class CartUseCaseTest {
         Cart cart = new Cart();
         cart.setCreatedAt(date);
         cart.setQuantity(1);
-        cart.setProductId(4L);
-        cart.setUserId(4L);
+        cart.setProductId(3L);
+        cart.setUserId(3L);
         cart.setUpdatedAt(date2);
 
         target.addProductToCart(cart);
 
         assertAll("result", () -> {
-            verify(authenticationPersistencePortMock).getAuthenticatedUserId();
-            verify(stockConnectionPersistencePortMock).existById(4L);
-            verify(stockConnectionPersistencePortMock).isStockSufficient(4L, 1);
-            verify(cartPersistencePortMock).findProductByUserIdAndProductId(4L, 4L);
+            verify(stockConnectionPersistencePortMock).existById(3L);
+            verify(stockConnectionPersistencePortMock).isStockSufficient(3L, 1);
+            verify(cartPersistencePortMock).findProductByUserIdAndProductId(3L, 3L);
             verify(cartMock).getQuantity();
             verify(cartMock).setQuantity(2);
-            verify(cartMock).setUpdatedAt( any());
+            verify(cartMock).setUpdatedAt(any());
             verify(cartMock).getCreatedAt();
             verify(cartMock).getUpdatedAt();
             verify(cartPersistencePortMock).addProductToCart(cartMock);
+        });
+    }
+
+    @Test
+    void removeProductToCartWhenProductExistsRemovesSuccessfully() {
+        Long userId = 1L;
+        Long productId = 1L;
+
+        Cart existingCart = new Cart();
+        doReturn(existingCart).when(cartPersistencePortMock).findProductByUserIdAndProductId(userId, productId);
+        doNothing().when(cartPersistencePortMock).removeProductFromCart(userId, productId);
+        doNothing().when(cartPersistencePortMock).updateCartItemsUpdatedAt(eq(userId), any());
+
+        CartUseCase target = new CartUseCase(cartPersistencePortMock, authenticationPersistencePortMock, stockConnectionPersistencePortMock, supplyConnectionPersistencePortMock);
+
+        target.removeProductToCart(userId, productId);
+
+        assertAll("result", () -> {
+            verify(cartPersistencePortMock).findProductByUserIdAndProductId(userId, productId);
+            verify(cartPersistencePortMock).removeProductFromCart(userId, productId);
+            verify(cartPersistencePortMock).updateCartItemsUpdatedAt(eq(userId), any());
+        });
+    }
+
+    @Test
+    void removeProductToCartWhenProductNotExistThrowsNotFoundException() {
+        Long userId = 1L;
+        Long productId = 1L;
+
+        doReturn(null).when(cartPersistencePortMock).findProductByUserIdAndProductId(userId, productId);
+
+        CartUseCase target = new CartUseCase(cartPersistencePortMock, authenticationPersistencePortMock, stockConnectionPersistencePortMock, supplyConnectionPersistencePortMock);
+
+        final NotFoundException result = assertThrows(NotFoundException.class, () -> target.removeProductToCart(userId, productId));
+
+        assertAll("result", () -> {
+            assertThat(result.getMessage(), equalTo(CartUseCaseConstants.PRODUCT_NOT_FOUND));
+            verify(cartPersistencePortMock).findProductByUserIdAndProductId(userId, productId);
         });
     }
 
@@ -175,25 +182,45 @@ class CartUseCaseTest {
         });
     }
 
-    private void invokeCheckCategoriesLimit(CartUseCase target, Method method, List<Long> productIds) throws Exception {
-        try {
-            method.invoke(target, productIds);
-        } catch (InvocationTargetException e) {
-            if (e.getCause() instanceof CategoriesLimitException) {
-                throw (CategoriesLimitException) e.getCause();
-            } else {
-                throw e;
-            }
-        }
+    @Test
+    void addProductToCartWhenNewCartIsCreated() {
+        Long userId = 6L;
+        Long productId = 6L;
+
+        doReturn(userId).when(authenticationPersistencePortMock).getAuthenticatedUserId();
+        doReturn(true).when(stockConnectionPersistencePortMock).existById(productId);
+        doReturn(true).when(stockConnectionPersistencePortMock).isStockSufficient(productId, 1);
+
+        List<Long> productIds = new ArrayList<>();
+        doReturn(productIds).when(cartPersistencePortMock).findProductIdsByUserId(userId);
+
+        doReturn(Arrays.asList("Electronics", "Books")).when(stockConnectionPersistencePortMock).getCategoryNamesByProductId(any());
+
+        CartUseCase target = new CartUseCase(cartPersistencePortMock, authenticationPersistencePortMock, stockConnectionPersistencePortMock, supplyConnectionPersistencePortMock);
+        Cart cart = new Cart();
+        cart.setProductId(productId);
+        cart.setUserId(userId);
+        cart.setQuantity(1);
+
+        target.addProductToCart(cart);
+
+        assertAll("result", () -> {
+            verify(stockConnectionPersistencePortMock).existById(productId);
+            verify(stockConnectionPersistencePortMock).isStockSufficient(productId, 1);
+            verify(cartPersistencePortMock).findProductIdsByUserId(userId);
+            verify(stockConnectionPersistencePortMock).getCategoryNamesByProductId(any());
+            verify(cartPersistencePortMock).addProductToCart(any(Cart.class));
+        });
     }
+
 
     @Test
     void checkCategoriesLimitTest() throws Exception {
-        List<Long> productIds = Arrays.asList(1L, 2L, 3L, 4L); // Add a fourth product ID to exceed the category limit
+        List<Long> productIds = Arrays.asList(1L, 2L, 3L, 4L);
         List<String> categories1 = Arrays.asList("Electronics", "Books");
         List<String> categories2 = Arrays.asList("Electronics", "Toys");
         List<String> categories3 = List.of("Electronics");
-        List<String> categories4 = List.of("Electronics"); // This should trigger the exception
+        List<String> categories4 = List.of("Electronics");
 
         doReturn(categories1).when(stockConnectionPersistencePortMock).getCategoryNamesByProductId(1L);
         doReturn(categories2).when(stockConnectionPersistencePortMock).getCategoryNamesByProductId(2L);
@@ -214,36 +241,17 @@ class CartUseCaseTest {
         verify(stockConnectionPersistencePortMock).getCategoryNamesByProductId(4L);
     }
 
-    @Test
-    void addProductToCartWhenExistingCartIsNull() {
-        // Mock dependencies
-        doReturn(5L).when(authenticationPersistencePortMock).getAuthenticatedUserId();
-        doReturn(true).when(stockConnectionPersistencePortMock).existById(5L);
-        doReturn(true).when(stockConnectionPersistencePortMock).isStockSufficient(5L, 1);
-        doReturn(null).when(cartPersistencePortMock).findProductByUserIdAndProductId(5L, 5L);
-        doReturn(Arrays.asList(1L, 2L, 3L)).when(cartPersistencePortMock).findProductIdsByUserId(5L);
-        doNothing().when(cartPersistencePortMock).addProductToCart(any(Cart.class));
-
-        // Create CartUseCase instance
-        CartUseCase target = new CartUseCase(cartPersistencePortMock, authenticationPersistencePortMock, stockConnectionPersistencePortMock, supplyConnectionPersistencePortMock);
-
-        // Create Cart object
-        Cart cart = new Cart();
-        cart.setQuantity(1);
-        cart.setProductId(5L);
-        cart.setUserId(5L);
-
-        // Call the method
-        target.addProductToCart(cart);
-
-        // Verify interactions
-        assertAll("result", () -> {
-            verify(authenticationPersistencePortMock).getAuthenticatedUserId();
-            verify(stockConnectionPersistencePortMock).existById(5L);
-            verify(stockConnectionPersistencePortMock).isStockSufficient(5L, 1);
-            verify(cartPersistencePortMock).findProductByUserIdAndProductId(5L, 5L);
-            verify(cartPersistencePortMock).findProductIdsByUserId(5L);
-            verify(cartPersistencePortMock).addProductToCart(any(Cart.class));
-        });
+    private void invokeCheckCategoriesLimit(CartUseCase target, Method method, List<Long> productIds) throws Exception {
+        try {
+            method.invoke(target, productIds);
+        } catch (InvocationTargetException e) {
+            if (e.getCause() instanceof CategoriesLimitException) {
+                throw (CategoriesLimitException) e.getCause();
+            } else {
+                throw e;
+            }
+        }
     }
+
+
 }
