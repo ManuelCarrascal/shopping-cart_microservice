@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
 import java.util.Date;
 
 @Getter
@@ -16,6 +15,5 @@ public class CartResponse {
     private Long userId;
     private Date createdAt;
     private Date updatedAt;
-    private LocalDateTime lastModified;
 
 }

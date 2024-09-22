@@ -5,11 +5,13 @@ import emazon.cart.domain.exception.CategoriesLimitException;
 import emazon.cart.domain.exception.InsufficientStockException;
 import emazon.cart.domain.exception.NotFoundException;
 import emazon.cart.domain.model.Cart;
+import emazon.cart.domain.model.Pagination;
 import emazon.cart.domain.spi.*;
 import emazon.cart.domain.util.CartUseCaseConstants;
+import emazon.cart.ports.application.http.dto.ProductResponse;
+import emazon.cart.ports.application.http.dto.product.ProductCartRequest;
 
 
-import java.time.LocalDateTime;
 import java.util.*;
 
 public class CartUseCase implements ICartServicePort {
@@ -56,14 +58,25 @@ public class CartUseCase implements ICartServicePort {
     }
 
     @Override
-    public void removeProductToCart( Long userId,Long productId) {
+    public void removeProductToCart(Long userId, Long productId) {
         Cart existingCart = cartPersistencePort.findProductByUserIdAndProductId(userId, productId);
-        if(existingCart == null) {
+        if (existingCart == null) {
             throw new NotFoundException(CartUseCaseConstants.PRODUCT_NOT_FOUND);
         }
         cartPersistencePort.removeProductFromCart(userId, productId);
         cartPersistencePort.updateCartItemsUpdatedAt(userId, new Date());
 
+    }
+
+
+    @Override
+    public List<Long> findProductIdsByUserId( int page, int size, boolean isAscending, String categoryName, String brandName) {
+        Long userId = authenticationPersistencePort.getAuthenticatedUserId();
+        ProductCartRequest productCartRequest = new ProductCartRequest();
+        productCartRequest.setProductIds(cartPersistencePort.findProductIdsByUserId(userId));
+        Pagination<ProductResponse> productResponse = stockConnectionPersistencePort.getAllProductsPaginatedByIds(page, size, isAscending, categoryName, brandName,productCartRequest);
+        productResponse.getContent().forEach(System.out::println);
+        return  null;
     }
 
     private void validateProductExistence(Long productId) {
@@ -89,10 +102,6 @@ public class CartUseCase implements ICartServicePort {
         cart.setCreatedAt(new Date());
         cart.setUpdatedAt(new Date());
         cartPersistencePort.addProductToCart(cart);
-    }
-
-    public LocalDateTime getLastModifiedByUserId(Long userId) {
-        return cartPersistencePort.findLastModifiedByUserId(userId);
     }
 
     private void checkCategoriesLimit(List<Long> productIds) {
