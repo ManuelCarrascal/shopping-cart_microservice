@@ -70,13 +70,26 @@ public class CartUseCase implements ICartServicePort {
 
 
     @Override
-    public List<Long> findProductIdsByUserId( int page, int size, boolean isAscending, String categoryName, String brandName) {
+    public Pagination<ProductResponse> findProductIdsByUserId(int page, int size, boolean isAscending, String categoryName, String brandName) {
         Long userId = authenticationPersistencePort.getAuthenticatedUserId();
         ProductCartRequest productCartRequest = new ProductCartRequest();
         productCartRequest.setProductIds(cartPersistencePort.findProductIdsByUserId(userId));
-        Pagination<ProductResponse> productResponse = stockConnectionPersistencePort.getAllProductsPaginatedByIds(page, size, isAscending, categoryName, brandName,productCartRequest);
-        productResponse.getContent().forEach(System.out::println);
-        return  null;
+        Pagination<ProductResponse> productResponsePagination = stockConnectionPersistencePort.getAllProductsPaginatedByIds(page, size, isAscending, categoryName, brandName, productCartRequest);
+
+        for (ProductResponse productResponse : productResponsePagination.getContent()) {
+            Cart cart = cartPersistencePort.findProductByUserIdAndProductId(userId, productResponse.getProductId());
+            if (cart == null) {
+                continue;
+            }
+
+            int cartQuantity = cart.getQuantity();
+            if (productResponse.getProductQuantity() == 0 || productResponse.getProductQuantity() < cartQuantity) {
+                String nextSupplyDate = supplyConnectionPersistencePort.getNextSupplyDate(productResponse.getProductId());
+                productResponse.setNextSupplyDate(nextSupplyDate);
+            }
+        }
+
+        return productResponsePagination;
     }
 
     private void validateProductExistence(Long productId) {

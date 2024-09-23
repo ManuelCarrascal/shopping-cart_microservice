@@ -1,9 +1,12 @@
 package emazon.cart.ports.application.http.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import emazon.cart.ports.application.http.dto.brand.BrandProductResponse;
 import emazon.cart.ports.application.http.dto.category.CategoryProductResponse;
 import emazon.cart.ports.application.http.util.openapi.product.ProductResponseConstants;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
 import lombok.*;
 
 import java.util.List;
@@ -30,4 +33,7 @@ public class ProductResponse {
     private BrandProductResponse brand;
     @Schema(description = ProductResponseConstants.CATEGORIES_DESCRIPTION)
     private List<CategoryProductResponse> categories;
+    @Temporal(TemporalType.DATE)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String nextSupplyDate;
 }
