@@ -1,6 +1,11 @@
 package emazon.cart.domain.spi;
 
 
+
+import emazon.cart.domain.model.Pagination;
+import emazon.cart.ports.application.http.dto.ProductResponse;
+import emazon.cart.ports.application.http.dto.product.ProductCartRequest;
+
 import java.util.List;
 
 public interface IStockConnectionPersistencePort {
@@ -10,4 +15,14 @@ public interface IStockConnectionPersistencePort {
 
     List<String> getCategoryNamesByProductId(Long productId);
 
+    Pagination<ProductResponse> getAllProductsPaginatedByIds(
+            int page,
+            int size,
+            boolean isAscending,
+            String categoryName,
+            String brandName,
+            ProductCartRequest productCartRequest
+            );
+
+    Double getProductPriceById(Long productId);
 }

@@ -1,9 +1,11 @@
 package emazon.cart.infrastructure.config.feign;
 
+import emazon.cart.domain.model.Pagination;
 import emazon.cart.infrastructure.config.utils.FeignConstants;
+import emazon.cart.ports.application.http.dto.ProductResponse;
+import emazon.cart.ports.application.http.dto.product.ProductCartRequest;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -18,5 +20,19 @@ public interface IStockFeignClient {
 
     @GetMapping("/categories/{productId}/category-names")
     List<String> getCategoryNamesByProductId(@PathVariable Long productId);
+
+    @GetMapping("/products/products-cart")
+    Pagination<ProductResponse> getProductsCart(
+            @RequestParam(defaultValue = "0",  required = false) int page,
+            @RequestParam(defaultValue = "1", required = false) int size,
+            @RequestParam(defaultValue = "true", required = false )boolean isAscending,
+            @RequestParam(required = false) String categoryName,
+            @RequestParam(required = false) String brandName,
+            @RequestBody ProductCartRequest productCartRequest
+    );
+
+    @GetMapping("/products/{productId}/price")
+    Double getProductPriceById(@PathVariable Long productId);
+
 
 }

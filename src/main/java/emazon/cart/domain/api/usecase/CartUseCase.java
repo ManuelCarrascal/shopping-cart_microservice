@@ -5,11 +5,13 @@ import emazon.cart.domain.exception.CategoriesLimitException;
 import emazon.cart.domain.exception.InsufficientStockException;
 import emazon.cart.domain.exception.NotFoundException;
 import emazon.cart.domain.model.Cart;
+import emazon.cart.domain.model.Pagination;
 import emazon.cart.domain.spi.*;
 import emazon.cart.domain.util.CartUseCaseConstants;
+import emazon.cart.ports.application.http.dto.ProductResponse;
+import emazon.cart.ports.application.http.dto.product.ProductCartRequest;
 
 
-import java.time.LocalDateTime;
 import java.util.*;
 
 public class CartUseCase implements ICartServicePort {
@@ -34,11 +36,8 @@ public class CartUseCase implements ICartServicePort {
     public void addProductToCart(Cart cart) {
         Long userId = authenticationPersistencePort.getAuthenticatedUserId();
         cart.setUserId(userId);
-
         validateProductExistence(cart.getProductId());
-
         validateStockAvailability(cart);
-
         Cart existingCart = cartPersistencePort.findProductByUserIdAndProductId(userId, cart.getProductId());
 
         if (existingCart != null) {
@@ -51,19 +50,66 @@ public class CartUseCase implements ICartServicePort {
         List<Long> productsCart = new ArrayList<>(cartPersistencePort.findProductIdsByUserId(userId));
         productsCart.add(cart.getProductId());
         checkCategoriesLimit(productsCart);
-
         createNewCart(cart);
     }
 
     @Override
-    public void removeProductToCart( Long userId,Long productId) {
+    public void removeProductToCart(Long userId, Long productId) {
         Cart existingCart = cartPersistencePort.findProductByUserIdAndProductId(userId, productId);
-        if(existingCart == null) {
+        if (existingCart == null) {
             throw new NotFoundException(CartUseCaseConstants.PRODUCT_NOT_FOUND);
         }
         cartPersistencePort.removeProductFromCart(userId, productId);
         cartPersistencePort.updateCartItemsUpdatedAt(userId, new Date());
 
+    }
+
+    @Override
+    public Pagination<ProductResponse> findProductIdsByUserId(int page, int size, boolean isAscending, String categoryName, String brandName) {
+        Long userId = authenticationPersistencePort.getAuthenticatedUserId();
+        ProductCartRequest productCartRequest = createProductCartRequest(userId);
+        Pagination<ProductResponse> productResponsePagination = stockConnectionPersistencePort.getAllProductsPaginatedByIds(page, size, isAscending, categoryName, brandName, productCartRequest);
+
+        double total = calculateTotalForAllItems(userId);
+        updateProductDetailsInCart(userId, productResponsePagination);
+        productResponsePagination.setTotal(total);
+        return productResponsePagination;
+    }
+
+    private ProductCartRequest createProductCartRequest(Long userId) {
+        ProductCartRequest productCartRequest = new ProductCartRequest();
+        productCartRequest.setProductIds(cartPersistencePort.findProductIdsByUserId(userId));
+        return productCartRequest;
+    }
+
+    private double calculateTotalForAllItems(Long userId) {
+        List<Long> productIds = cartPersistencePort.findProductIdsByUserId(userId);
+        double total = CartUseCaseConstants.DEFAULT_TOTAL;
+        for (Long productId : productIds) {
+            Cart cart = cartPersistencePort.findProductByUserIdAndProductId(userId, productId);
+            if (cart != null) {
+                total += cart.getQuantity() * stockConnectionPersistencePort.getProductPriceById(productId);
+            }
+        }
+        return total;
+    }
+
+    private void updateProductDetailsInCart(Long userId, Pagination<ProductResponse> productResponsePagination) {
+        for (ProductResponse productResponse : productResponsePagination.getContent()) {
+            Cart cart = cartPersistencePort.findProductByUserIdAndProductId(userId, productResponse.getProductId());
+            if (cart == null) {
+                continue;
+            }
+
+            int cartQuantity = cart.getQuantity();
+            double subtotal = productResponse.getProductPrice() * cartQuantity;
+            productResponse.setSubtotal(subtotal);
+            if (productResponse.getProductQuantity() == CartUseCaseConstants.DEFAULT_PRODUCT_QUANTITY || productResponse.getProductQuantity() < cartQuantity) {
+                String nextSupplyDate = supplyConnectionPersistencePort.getNextSupplyDate(productResponse.getProductId());
+                productResponse.setNextSupplyDate(nextSupplyDate);
+            }
+            productResponse.setCartQuantity(cartQuantity);
+        }
     }
 
     private void validateProductExistence(Long productId) {
@@ -89,10 +135,6 @@ public class CartUseCase implements ICartServicePort {
         cart.setCreatedAt(new Date());
         cart.setUpdatedAt(new Date());
         cartPersistencePort.addProductToCart(cart);
-    }
-
-    public LocalDateTime getLastModifiedByUserId(Long userId) {
-        return cartPersistencePort.findLastModifiedByUserId(userId);
     }
 
     private void checkCategoriesLimit(List<Long> productIds) {
