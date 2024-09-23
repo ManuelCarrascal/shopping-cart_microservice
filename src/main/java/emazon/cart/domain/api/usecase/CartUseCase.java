@@ -36,11 +36,8 @@ public class CartUseCase implements ICartServicePort {
     public void addProductToCart(Cart cart) {
         Long userId = authenticationPersistencePort.getAuthenticatedUserId();
         cart.setUserId(userId);
-
         validateProductExistence(cart.getProductId());
-
         validateStockAvailability(cart);
-
         Cart existingCart = cartPersistencePort.findProductByUserIdAndProductId(userId, cart.getProductId());
 
         if (existingCart != null) {
@@ -53,7 +50,6 @@ public class CartUseCase implements ICartServicePort {
         List<Long> productsCart = new ArrayList<>(cartPersistencePort.findProductIdsByUserId(userId));
         productsCart.add(cart.getProductId());
         checkCategoriesLimit(productsCart);
-
         createNewCart(cart);
     }
 
@@ -75,11 +71,8 @@ public class CartUseCase implements ICartServicePort {
         Pagination<ProductResponse> productResponsePagination = stockConnectionPersistencePort.getAllProductsPaginatedByIds(page, size, isAscending, categoryName, brandName, productCartRequest);
 
         double total = calculateTotalForAllItems(userId);
-
         updateProductDetailsInCart(userId, productResponsePagination);
-
         productResponsePagination.setTotal(total);
-
         return productResponsePagination;
     }
 
