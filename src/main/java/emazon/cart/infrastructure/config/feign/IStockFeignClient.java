@@ -31,5 +31,8 @@ public interface IStockFeignClient {
             @RequestBody ProductCartRequest productCartRequest
     );
 
+    @GetMapping("/products/{productId}/price")
+    Double getProductPriceById(@PathVariable Long productId);
+
 
 }

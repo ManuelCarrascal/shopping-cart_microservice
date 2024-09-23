@@ -29,11 +29,16 @@ public class ProductResponse {
     private Integer productQuantity;
     @Schema(description = ProductResponseConstants.PRODUCT_PRICE_DESCRIPTION, example = ProductResponseConstants.PRODUCT_PRICE_EXAMPLE)
     private Double productPrice;
+    @Schema(description = ProductResponseConstants.CART_QUANTITY_DESCRIPTION, example = ProductResponseConstants.CART_QUANTITY_EXAMPLE)
+    private Integer cartQuantity;
     @Schema(description = ProductResponseConstants.BRAND_DESCRIPTION)
     private BrandProductResponse brand;
     @Schema(description = ProductResponseConstants.CATEGORIES_DESCRIPTION)
     private List<CategoryProductResponse> categories;
     @Temporal(TemporalType.DATE)
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    @Schema(description = ProductResponseConstants.NEXT_SUPPLY_DATE_DESCRIPTION, example = ProductResponseConstants.NEXT_SUPPLY_DATE_EXAMPLE)
     private String nextSupplyDate;
+    @Schema(description = ProductResponseConstants.SUBTOTAL_DESCRIPTION, example = ProductResponseConstants.SUBTOTAL_EXAMPLE)
+    private Double subtotal;
 }

@@ -59,12 +59,12 @@ public class CartRestController {
         return ResponseEntity.status(HttpStatus.OK).body(CartRestControllerConstants.REMOVE_PRODUCT_RESPONSE_BODY);
     }
 
-    //@PreAuthorize(RolePermissionConstants.HAS_ROLE_CLIENTE)
+    @PreAuthorize(RolePermissionConstants.HAS_ROLE_CLIENTE)
     @GetMapping()
     public ResponseEntity<Pagination<ProductResponse>> getCartByUserId(
-            @RequestParam(defaultValue = "0", required = false) int page,
-            @RequestParam(defaultValue = "1", required = false) int size,
-            @RequestParam(defaultValue = "true", required = false) boolean isAscending,
+            @RequestParam(defaultValue = CartRestControllerConstants.DEFAULT_PAGE, required = false) int page,
+            @RequestParam(defaultValue = CartRestControllerConstants.DEFAULT_SIZE, required = false) int size,
+            @RequestParam(defaultValue = CartRestControllerConstants.DEFAULT_IS_ASCENDING, required = false) boolean isAscending,
             @RequestParam(required = false) String categoryName,
             @RequestParam(required = false) String brandName) {
         Pagination<ProductResponse> productIds = cartServicePort.findProductIdsByUserId(page, size, isAscending, categoryName, brandName);

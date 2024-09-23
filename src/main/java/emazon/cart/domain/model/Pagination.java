@@ -9,8 +9,9 @@ public class Pagination<T> {
     private int currentPage;
     private boolean ascending;
     private boolean empty;
+    private double total;
 
-    public Pagination(boolean ascending, int currentPage, int totalPages, Long totalElements, List<T> content) {
+    public Pagination(boolean ascending, int currentPage, int totalPages, Long totalElements, List<T> content, double total) {
 
         this.ascending = ascending;
         this.currentPage = currentPage;
@@ -18,6 +19,7 @@ public class Pagination<T> {
         this.totalElements = totalElements;
         this.content = content;
         this.empty = content.isEmpty();
+        this.total = total;
     }
 
     public List<T> getContent() {
@@ -66,5 +68,13 @@ public class Pagination<T> {
 
     public void setEmpty(boolean empty) {
         this.empty = empty;
+    }
+
+    public double getTotal() {
+        return total;
+    }
+
+    public void setTotal(double total) {
+        this.total = total;
     }
 }

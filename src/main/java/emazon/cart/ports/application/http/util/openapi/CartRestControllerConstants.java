@@ -16,8 +16,11 @@ public class CartRestControllerConstants {
 
     public static final String RESPONSE_CODE_201 = "201";
     public static final String RESPONSE_CODE_400 = "400";
-
     public static final String RESPONSE_CODE_200 = "200";
+
+    public static final String DEFAULT_PAGE = "0";
+    public static final String DEFAULT_SIZE = "1";
+    public static final String DEFAULT_IS_ASCENDING = "true";
 
 
     private CartRestControllerConstants() {

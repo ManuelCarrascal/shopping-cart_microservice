@@ -24,5 +24,5 @@ public interface IStockConnectionPersistencePort {
             ProductCartRequest productCartRequest
             );
 
-
+    Double getProductPriceById(Long productId);
 }

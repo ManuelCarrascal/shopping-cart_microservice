@@ -68,14 +68,40 @@ public class CartUseCase implements ICartServicePort {
 
     }
 
-
     @Override
     public Pagination<ProductResponse> findProductIdsByUserId(int page, int size, boolean isAscending, String categoryName, String brandName) {
         Long userId = authenticationPersistencePort.getAuthenticatedUserId();
-        ProductCartRequest productCartRequest = new ProductCartRequest();
-        productCartRequest.setProductIds(cartPersistencePort.findProductIdsByUserId(userId));
+        ProductCartRequest productCartRequest = createProductCartRequest(userId);
         Pagination<ProductResponse> productResponsePagination = stockConnectionPersistencePort.getAllProductsPaginatedByIds(page, size, isAscending, categoryName, brandName, productCartRequest);
 
+        double total = calculateTotalForAllItems(userId);
+
+        updateProductDetailsInCart(userId, productResponsePagination);
+
+        productResponsePagination.setTotal(total);
+
+        return productResponsePagination;
+    }
+
+    private ProductCartRequest createProductCartRequest(Long userId) {
+        ProductCartRequest productCartRequest = new ProductCartRequest();
+        productCartRequest.setProductIds(cartPersistencePort.findProductIdsByUserId(userId));
+        return productCartRequest;
+    }
+
+    private double calculateTotalForAllItems(Long userId) {
+        List<Long> productIds = cartPersistencePort.findProductIdsByUserId(userId);
+        double total = CartUseCaseConstants.DEFAULT_TOTAL;
+        for (Long productId : productIds) {
+            Cart cart = cartPersistencePort.findProductByUserIdAndProductId(userId, productId);
+            if (cart != null) {
+                total += cart.getQuantity() * stockConnectionPersistencePort.getProductPriceById(productId);
+            }
+        }
+        return total;
+    }
+
+    private void updateProductDetailsInCart(Long userId, Pagination<ProductResponse> productResponsePagination) {
         for (ProductResponse productResponse : productResponsePagination.getContent()) {
             Cart cart = cartPersistencePort.findProductByUserIdAndProductId(userId, productResponse.getProductId());
             if (cart == null) {
@@ -83,13 +109,14 @@ public class CartUseCase implements ICartServicePort {
             }
 
             int cartQuantity = cart.getQuantity();
-            if (productResponse.getProductQuantity() == 0 || productResponse.getProductQuantity() < cartQuantity) {
+            double subtotal = productResponse.getProductPrice() * cartQuantity;
+            productResponse.setSubtotal(subtotal);
+            if (productResponse.getProductQuantity() == CartUseCaseConstants.DEFAULT_PRODUCT_QUANTITY || productResponse.getProductQuantity() < cartQuantity) {
                 String nextSupplyDate = supplyConnectionPersistencePort.getNextSupplyDate(productResponse.getProductId());
                 productResponse.setNextSupplyDate(nextSupplyDate);
             }
+            productResponse.setCartQuantity(cartQuantity);
         }
-
-        return productResponsePagination;
     }
 
     private void validateProductExistence(Long productId) {

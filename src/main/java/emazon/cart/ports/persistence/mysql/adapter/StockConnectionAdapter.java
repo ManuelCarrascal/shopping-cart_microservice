@@ -5,6 +5,7 @@ import emazon.cart.domain.spi.IStockConnectionPersistencePort;
 import emazon.cart.infrastructure.config.feign.IStockFeignClient;
 import emazon.cart.ports.application.http.dto.ProductResponse;
 import emazon.cart.ports.application.http.dto.product.ProductCartRequest;
+import emazon.cart.ports.persistence.mysql.util.StockConnectionAdapterConstants;
 import feign.FeignException;
 import java.util.Collections;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,15 @@ public class StockConnectionAdapter implements IStockConnectionPersistencePort {
     @Override
     public Pagination<ProductResponse> getAllProductsPaginatedByIds( int page, int size, boolean isAscending, String categoryName, String brandName,ProductCartRequest productCartRequest) {
         return stockFeignClient.getProductsCart( page, size, isAscending, categoryName, brandName,productCartRequest);
+    }
+
+    @Override
+    public Double getProductPriceById(Long productId) {
+        try {
+            return stockFeignClient.getProductPriceById(productId);
+        } catch (FeignException.NotFound e) {
+            return StockConnectionAdapterConstants.DEFAULT_PRODUCT_PRICE;
+        }
     }
 
 }
