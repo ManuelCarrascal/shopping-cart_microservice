@@ -1,82 +1,110 @@
 package emazon.cart.domain.model;
 
-import java.util.List;
-
 public class Product {
-    private Long productId;
-    private String productName;
-    private String productDescription;
-    private Integer productQuantity;
-    private Double productPrice;
-    private Long brandId;
-    private List<Long> categoryIds;
+    private final Long productId;
+    private final String productName;
+    private final String productDescription;
+    private final Integer productQuantity;
+    private final Double productPrice;
+    private final Integer cartQuantity;
+    private final String nextSupplyDate;
+    private final Double subtotal;
 
-    public Product() {
+    private Product(Builder builder) {
+        this.productId = builder.productId;
+        this.productName = builder.productName;
+        this.productDescription = builder.productDescription;
+        this.productQuantity = builder.productQuantity;
+        this.productPrice = builder.productPrice;
+        this.cartQuantity = builder.cartQuantity;
+        this.nextSupplyDate = builder.nextSupplyDate;
+        this.subtotal = builder.subtotal;
     }
 
-    public Product(Long productId, String productName, String productDescription, Integer productQuantity, Double productPrice, Long brandId, List<Long> categoryIds) {
-        this.productId = productId;
-        this.productName = productName;
-        this.productDescription = productDescription;
-        this.productQuantity = productQuantity;
-        this.productPrice = productPrice;
-        this.brandId = brandId;
-        this.categoryIds = categoryIds;
+    public static class Builder {
+        private Long productId;
+        private String productName;
+        private String productDescription;
+        private Integer productQuantity;
+        private Double productPrice;
+        private Integer cartQuantity;
+        private String nextSupplyDate;
+        private Double subtotal;
+
+        public Builder productId(Long productId) {
+            this.productId = productId;
+            return this;
+        }
+
+        public Builder productName(String productName) {
+            this.productName = productName;
+            return this;
+        }
+
+        public Builder productDescription(String productDescription) {
+            this.productDescription = productDescription;
+            return this;
+        }
+
+        public Builder productQuantity(Integer productQuantity) {
+            this.productQuantity = productQuantity;
+            return this;
+        }
+
+        public Builder productPrice(Double productPrice) {
+            this.productPrice = productPrice;
+            return this;
+        }
+
+        public Builder cartQuantity(Integer cartQuantity) {
+            this.cartQuantity = cartQuantity;
+            return this;
+        }
+
+        public Builder nextSupplyDate(String nextSupplyDate) {
+            this.nextSupplyDate = nextSupplyDate;
+            return this;
+        }
+
+        public Builder subtotal(Double subtotal) {
+            this.subtotal = subtotal;
+            return this;
+        }
+
+        public Product build() {
+            return new Product(this);
+        }
     }
 
     public Long getProductId() {
         return productId;
     }
 
-    public void setProductId(Long productId) {
-        this.productId = productId;
-    }
-
     public String getProductName() {
         return productName;
-    }
-
-    public void setProductName(String productName) {
-        this.productName = productName;
     }
 
     public String getProductDescription() {
         return productDescription;
     }
 
-    public void setProductDescription(String productDescription) {
-        this.productDescription = productDescription;
-    }
-
     public Integer getProductQuantity() {
         return productQuantity;
-    }
-
-    public void setProductQuantity(Integer productQuantity) {
-        this.productQuantity = productQuantity;
     }
 
     public Double getProductPrice() {
         return productPrice;
     }
 
-    public void setProductPrice(Double productPrice) {
-        this.productPrice = productPrice;
+    public Integer getCartQuantity() {
+        return cartQuantity;
     }
 
-    public Long getBrandId() {
-        return brandId;
+    public String getNextSupplyDate() {
+        return nextSupplyDate;
     }
 
-    public void setBrandId(Long brandId) {
-        this.brandId = brandId;
-    }
-
-    public List<Long> getCategoryIds() {
-        return categoryIds;
-    }
-
-    public void setCategoryIds(List<Long> categoryIds) {
-        this.categoryIds = categoryIds;
+    public Double getSubtotal() {
+        return subtotal;
     }
 }

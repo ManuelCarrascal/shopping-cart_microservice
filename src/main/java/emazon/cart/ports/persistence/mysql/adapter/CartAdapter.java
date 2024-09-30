@@ -5,6 +5,7 @@ import emazon.cart.domain.spi.ICartPersistencePort;
 import emazon.cart.ports.persistence.mysql.entity.CartEntity;
 import emazon.cart.ports.persistence.mysql.mapper.ICartEntityMapper;
 import emazon.cart.ports.persistence.mysql.repository.ICartRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Date;
@@ -46,5 +47,16 @@ public class CartAdapter implements ICartPersistencePort {
             cartEntity.setUpdatedAt(updatedAt);
             cartRepository.save(cartEntity);
         }
+    }
+
+    @Override
+    public List<Cart> findCartByUserId(Long userId) {
+        return cartEntityMapper.toModelList(cartRepository.findCartByUserId(userId));
+    }
+
+    @Override
+    @Transactional
+    public void deleteCart(Long userId) {
+        cartRepository.deleteByUserId(userId);
     }
 }

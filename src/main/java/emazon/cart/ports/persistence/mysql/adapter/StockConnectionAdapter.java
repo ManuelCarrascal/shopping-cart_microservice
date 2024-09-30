@@ -1,13 +1,16 @@
 package emazon.cart.ports.persistence.mysql.adapter;
 
 import emazon.cart.domain.model.Pagination;
+import emazon.cart.domain.model.Product;
+import emazon.cart.domain.model.dto.ProductDetailsCart;
+import emazon.cart.domain.model.dto.ProductListCartDomain;
 import emazon.cart.domain.spi.IStockConnectionPersistencePort;
 import emazon.cart.infrastructure.config.feign.IStockFeignClient;
-import emazon.cart.ports.application.http.dto.ProductResponse;
-import emazon.cart.ports.application.http.dto.product.ProductCartRequest;
 import emazon.cart.ports.persistence.mysql.util.StockConnectionAdapterConstants;
 import feign.FeignException;
+
 import java.util.Collections;
+
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
@@ -19,32 +22,32 @@ public class StockConnectionAdapter implements IStockConnectionPersistencePort {
     private final IStockFeignClient stockFeignClient;
 
     public boolean existById(Long id) {
-        try{
+        try {
             return stockFeignClient.existById(id);
-        }catch (FeignException.NotFound e){
+        } catch (FeignException.NotFound e) {
             return false;
         }
     }
 
     public boolean isStockSufficient(Long productId, Integer quantity) {
-        try{
+        try {
             return stockFeignClient.isStockSufficient(productId, quantity);
-        }catch (FeignException.NotFound e){
+        } catch (FeignException.NotFound e) {
             return false;
         }
     }
 
     public List<String> getCategoryNamesByProductId(Long productId) {
-        try{
+        try {
             return stockFeignClient.getCategoryNamesByProductId(productId);
-        }catch (FeignException.NotFound e){
+        } catch (FeignException.NotFound e) {
             return Collections.emptyList();
         }
     }
 
     @Override
-    public Pagination<ProductResponse> getAllProductsPaginatedByIds( int page, int size, boolean isAscending, String categoryName, String brandName,ProductCartRequest productCartRequest) {
-        return stockFeignClient.getProductsCart( page, size, isAscending, categoryName, brandName,productCartRequest);
+    public Pagination<ProductDetailsCart> getAllProductsPaginatedByIds(int page, int size, boolean isAscending, String categoryName, String brandName, ProductListCartDomain productListCartDomain) {
+        return stockFeignClient.getProductsCart(page, size, isAscending, categoryName, brandName, productListCartDomain);
     }
 
     @Override
@@ -53,6 +56,15 @@ public class StockConnectionAdapter implements IStockConnectionPersistencePort {
             return stockFeignClient.getProductPriceById(productId);
         } catch (FeignException.NotFound e) {
             return StockConnectionAdapterConstants.DEFAULT_PRODUCT_PRICE;
+        }
+    }
+
+    @Override
+    public List<Product> getAllProducts(List<Long> productIds) {
+        try {
+            return stockFeignClient.getAllProducts();
+        } catch (FeignException.NotFound e) {
+            return Collections.emptyList();
         }
     }
 

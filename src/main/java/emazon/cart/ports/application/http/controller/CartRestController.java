@@ -6,6 +6,7 @@ import emazon.cart.domain.model.Pagination;
 import emazon.cart.ports.application.http.dto.CartRequest;
 import emazon.cart.ports.application.http.dto.CartResponse;
 import emazon.cart.ports.application.http.dto.ProductResponse;
+import emazon.cart.ports.application.http.handler.ICartRestHandler;
 import emazon.cart.ports.application.http.mapper.ICartRequestMapper;
 import emazon.cart.ports.application.http.mapper.ICartResponseMapper;
 import emazon.cart.ports.application.http.util.RolePermissionConstants;
@@ -22,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 
 
 @RestController
@@ -33,6 +35,7 @@ public class CartRestController {
     private final ICartRequestMapper cartRequestMapper;
     private final ICartResponseMapper cartResponseMapper;
     private final ICartServicePort cartServicePort;
+    private final ICartRestHandler cartRestHandler;
 
     @PreAuthorize(RolePermissionConstants.HAS_ROLE_CLIENTE)
     @PostMapping("/add")
@@ -67,8 +70,23 @@ public class CartRestController {
             @RequestParam(defaultValue = CartRestControllerConstants.DEFAULT_IS_ASCENDING, required = false) boolean isAscending,
             @RequestParam(required = false) String categoryName,
             @RequestParam(required = false) String brandName) {
-        Pagination<ProductResponse> productIds = cartServicePort.findProductIdsByUserId(page, size, isAscending, categoryName, brandName);
+
+        Pagination<ProductResponse> productIds =  cartRestHandler.findProductIdsByUserId(page, size, isAscending, categoryName, brandName);
         return ResponseEntity.status(HttpStatus.OK).body(productIds);
+    }
+
+    @GetMapping("/cart-products")
+    @PreAuthorize(RolePermissionConstants.HAS_ROLE_CLIENTE)
+    public ResponseEntity<List<CartResponse>> buyProducts(){
+        List<CartResponse>  cartByUserId= cartResponseMapper.cartListToCartResponseList(cartServicePort.findCartByUserId());
+    return ResponseEntity.status(HttpStatus.OK).body(cartByUserId);
+    }
+
+    @DeleteMapping
+    @PreAuthorize(RolePermissionConstants.HAS_ROLE_CLIENTE)
+    public ResponseEntity<String> deleteCart(){
+        cartServicePort.deleteCart();
+        return ResponseEntity.status(HttpStatus.OK).body(CartRestControllerConstants.DELETE_CART_RESPONSE_BODY);
     }
 
 }

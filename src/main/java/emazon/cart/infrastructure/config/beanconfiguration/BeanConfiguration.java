@@ -6,6 +6,9 @@ import emazon.cart.domain.api.usecase.CartUseCase;
 import emazon.cart.domain.spi.*;
 import emazon.cart.infrastructure.config.feign.IStockFeignClient;
 import emazon.cart.infrastructure.config.feign.ISupplyFeignClient;
+import emazon.cart.ports.application.http.handler.CartRestHandler;
+import emazon.cart.ports.application.http.handler.ICartRestHandler;
+import emazon.cart.ports.application.http.mapper.ICartResponseMapper;
 import emazon.cart.ports.persistence.mysql.adapter.*;
 import emazon.cart.ports.persistence.mysql.mapper.ICartEntityMapper;
 import emazon.cart.ports.persistence.mysql.repository.ICartRepository;
@@ -16,6 +19,11 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @RequiredArgsConstructor
 public class BeanConfiguration {
+
+    @Bean
+    public ICartRestHandler cartRestHandler(ICartServicePort cartServicePort, ICartResponseMapper cartResponseMapper) {
+        return new CartRestHandler(cartServicePort, cartResponseMapper);
+    }
 
     @Bean
     public ICartPersistencePort cartPersistencePort(ICartRepository cartRepository, ICartEntityMapper cartEntityMapper) {

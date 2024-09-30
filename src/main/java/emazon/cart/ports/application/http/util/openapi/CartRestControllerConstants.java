@@ -22,6 +22,8 @@ public class CartRestControllerConstants {
     public static final String DEFAULT_SIZE = "1";
     public static final String DEFAULT_IS_ASCENDING = "true";
 
+    public static final String DELETE_CART_RESPONSE_BODY = "cart deleted successfully";
+
 
     private CartRestControllerConstants() {
     }

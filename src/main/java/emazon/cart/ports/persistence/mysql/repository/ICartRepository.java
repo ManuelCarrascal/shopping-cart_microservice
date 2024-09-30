@@ -12,4 +12,7 @@ public interface ICartRepository extends JpaRepository<CartEntity, Long> {
 
     List<CartEntity> findByUserId(Long userId);
 
+    List<CartEntity> findCartByUserId(Long userId);
+
+    void deleteByUserId(Long userId);
 }
