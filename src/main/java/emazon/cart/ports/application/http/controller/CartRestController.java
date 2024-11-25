@@ -3,9 +3,10 @@ package emazon.cart.ports.application.http.controller;
 import emazon.cart.domain.api.ICartServicePort;
 import emazon.cart.domain.model.Cart;
 import emazon.cart.domain.model.Pagination;
-import emazon.cart.ports.application.http.dto.CartRequest;
-import emazon.cart.ports.application.http.dto.CartResponse;
-import emazon.cart.ports.application.http.dto.ProductResponse;
+import emazon.cart.ports.application.http.dto.cart.CartRequest;
+import emazon.cart.ports.application.http.dto.cart.CartResponse;
+import emazon.cart.ports.application.http.dto.cart.CartUpdateQuantityRequest;
+import emazon.cart.ports.application.http.dto.product.ProductResponse;
 import emazon.cart.ports.application.http.handler.ICartRestHandler;
 import emazon.cart.ports.application.http.mapper.ICartRequestMapper;
 import emazon.cart.ports.application.http.mapper.ICartResponseMapper;
@@ -28,6 +29,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/cart")
+@CrossOrigin(origins = "${cors_allowed.origins}")
 @RequiredArgsConstructor
 @Tag(name = CartRestControllerConstants.TAG_NAME, description = CartRestControllerConstants.TAG_DESCRIPTION)
 public class CartRestController {
@@ -52,13 +54,13 @@ public class CartRestController {
     }
 
     @PreAuthorize(RolePermissionConstants.HAS_ROLE_CLIENTE)
-    @DeleteMapping("/delete/{userId}/{productId}")
+    @DeleteMapping("/delete/{productId}")
     @Operation(summary = CartRestControllerConstants.REMOVE_PRODUCT_SUMMARY, description = CartRestControllerConstants.REMOVE_PRODUCT_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(responseCode = CartRestControllerConstants.RESPONSE_CODE_200, description = CartRestControllerConstants.REMOVE_PRODUCT_RESPONSE_200_DESCRIPTION),
     })
-    public ResponseEntity<String> removeProductFromCart(@PathVariable Long userId, @PathVariable Long productId) {
-        cartServicePort.removeProductToCart(userId, productId);
+    public ResponseEntity<String> removeProductFromCart( @PathVariable Long productId) {
+        cartServicePort.removeProductToCart(productId);
         return ResponseEntity.status(HttpStatus.OK).body(CartRestControllerConstants.REMOVE_PRODUCT_RESPONSE_BODY);
     }
 
@@ -87,6 +89,20 @@ public class CartRestController {
     public ResponseEntity<String> deleteCart(){
         cartServicePort.deleteCart();
         return ResponseEntity.status(HttpStatus.OK).body(CartRestControllerConstants.DELETE_CART_RESPONSE_BODY);
+    }
+
+    @GetMapping("/latest-update")
+    @PreAuthorize(RolePermissionConstants.HAS_ROLE_CLIENTE)
+    public ResponseEntity<String> getLatestCartUpdateDate(@RequestHeader("Authorization") String token) {
+        String latestUpdateDate = cartServicePort.getLatestCartUpdateDate();
+        return ResponseEntity.ok(latestUpdateDate);
+    }
+
+    @PreAuthorize(RolePermissionConstants.HAS_ROLE_CLIENTE)
+    @PatchMapping("/update-quantity")
+    public ResponseEntity<Void> updateProductQuantity(@RequestBody CartUpdateQuantityRequest request) {
+        cartServicePort.updateCartQuantity(request.getProductId(), request.getQuantity());
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
 }

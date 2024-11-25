@@ -12,6 +12,9 @@ import emazon.cart.domain.spi.*;
 import emazon.cart.domain.util.CartUseCaseConstants;
 
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public  class   CartUseCase implements ICartServicePort {
@@ -62,7 +65,8 @@ public  class   CartUseCase implements ICartServicePort {
     }
 
     @Override
-    public void removeProductToCart(Long userId, Long productId) {
+    public void removeProductToCart( Long productId) {
+        Long userId = authenticationPersistencePort.getAuthenticatedUserId();
         Cart existingCart = cartPersistencePort.findProductByUserIdAndProductId(userId, productId);
         if (existingCart == null) {
             throw new NotFoundException(CartUseCaseConstants.PRODUCT_NOT_FOUND);
@@ -94,6 +98,32 @@ public  class   CartUseCase implements ICartServicePort {
     public void deleteCart() {
         Long userId = authenticationPersistencePort.getAuthenticatedUserId();
         cartPersistencePort.deleteCart(userId);
+    }
+
+    private String formatDate(Date date) {
+        LocalDateTime localDateTime = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+        return localDateTime.format(formatter);
+    }
+
+    @Override
+    public String getLatestCartUpdateDate() {
+        Long userId = authenticationPersistencePort.getAuthenticatedUserId();
+        Date latestUpdateDate = cartPersistencePort.getLatestCartUpdateDate(userId);
+        return formatDate(latestUpdateDate);
+    }
+
+    @Override
+    public void updateCartQuantity(Long productId, int quantity) {
+        Long userId = authenticationPersistencePort.getAuthenticatedUserId();
+        Cart existingCart = cartPersistencePort.findProductByUserIdAndProductId(userId, productId);
+        if (existingCart == null) {
+            throw new NotFoundException(CartUseCaseConstants.PRODUCT_NOT_FOUND);
+        }
+        validateStockAvailability(productId, quantity);
+        existingCart.setQuantity(quantity);
+        existingCart.setUpdatedAt(new Date());
+        cartPersistencePort.addProductToCart(existingCart);
     }
 
 

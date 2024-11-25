@@ -10,7 +10,7 @@ import emazon.cart.domain.spi.ICartPersistencePort;
 import emazon.cart.domain.spi.IStockConnectionPersistencePort;
 import emazon.cart.domain.spi.ISupplyConnectionPersistencePort;
 import emazon.cart.domain.util.CartUseCaseConstants;
-import emazon.cart.ports.application.http.dto.ProductResponse;
+import emazon.cart.ports.application.http.dto.product.ProductResponse;
 import emazon.cart.ports.application.http.dto.product.ProductCartRequest;
 import org.junit.jupiter.api.Test;
 

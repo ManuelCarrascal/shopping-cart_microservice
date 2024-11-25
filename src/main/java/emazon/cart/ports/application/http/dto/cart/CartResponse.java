@@ -1,4 +1,4 @@
-package emazon.cart.ports.application.http.dto;
+package emazon.cart.ports.application.http.dto.cart;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

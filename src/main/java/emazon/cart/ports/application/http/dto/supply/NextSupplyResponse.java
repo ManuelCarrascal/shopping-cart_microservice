@@ -1,4 +1,4 @@
-package emazon.cart.ports.application.http.dto;
+package emazon.cart.ports.application.http.dto.supply;
 
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;

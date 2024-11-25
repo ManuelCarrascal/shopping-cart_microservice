@@ -19,7 +19,7 @@ public class CartRestControllerConstants {
     public static final String RESPONSE_CODE_200 = "200";
 
     public static final String DEFAULT_PAGE = "0";
-    public static final String DEFAULT_SIZE = "1";
+    public static final String DEFAULT_SIZE = "5";
     public static final String DEFAULT_IS_ASCENDING = "true";
 
     public static final String DELETE_CART_RESPONSE_BODY = "cart deleted successfully";

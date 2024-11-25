@@ -3,7 +3,7 @@ package emazon.cart.ports.application.http.handler;
 import emazon.cart.domain.api.ICartServicePort;
 import emazon.cart.domain.model.Pagination;
 import emazon.cart.domain.model.dto.ProductDetailsCart;
-import emazon.cart.ports.application.http.dto.ProductResponse;
+import emazon.cart.ports.application.http.dto.product.ProductResponse;
 import emazon.cart.ports.application.http.mapper.ICartResponseMapper;
 import lombok.RequiredArgsConstructor;
 

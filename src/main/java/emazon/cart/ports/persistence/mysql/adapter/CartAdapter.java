@@ -59,4 +59,19 @@ public class CartAdapter implements ICartPersistencePort {
     public void deleteCart(Long userId) {
         cartRepository.deleteByUserId(userId);
     }
+
+    @Override
+    public Date getLatestCartUpdateDate(Long userId) {
+        return cartRepository.findTopByUserIdOrderByUpdatedAtDesc(userId).getUpdatedAt();
+    }
+
+    @Override
+    public void updateCartQuantity(Long userId, Long productId, int quantity) {
+        CartEntity cartEntity = cartRepository.findByUserIdAndProductId(userId, productId);
+        if (cartEntity != null) {
+            cartEntity.setQuantity(quantity);
+            cartEntity.setUpdatedAt(new Date());
+            cartRepository.save(cartEntity);
+        }
+    }
 }

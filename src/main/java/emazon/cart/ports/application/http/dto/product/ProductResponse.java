@@ -1,4 +1,4 @@
-package emazon.cart.ports.application.http.dto;
+package emazon.cart.ports.application.http.dto.product;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import emazon.cart.ports.application.http.dto.brand.BrandProductResponse;

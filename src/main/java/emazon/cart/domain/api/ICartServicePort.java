@@ -10,11 +10,16 @@ import java.util.List;
 public interface ICartServicePort {
     void addProductToCart(Cart cart);
 
-    void removeProductToCart(Long userId, Long productId );
+    void removeProductToCart(Long productId );
 
     Pagination<ProductDetailsCart> findProductIdsByUserId(int page, int size, boolean isAscending, String categoryName, String brandName);
 
     List<Cart> findCartByUserId();
 
     void deleteCart();
+
+    String getLatestCartUpdateDate();
+
+    void updateCartQuantity(Long productId, int quantity);
+
 }

@@ -1,7 +1,7 @@
 package emazon.cart.ports.application.http.handler;
 
 import emazon.cart.domain.model.Pagination;
-import emazon.cart.ports.application.http.dto.ProductResponse;
+import emazon.cart.ports.application.http.dto.product.ProductResponse;
 
 public interface ICartRestHandler {
 
